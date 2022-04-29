@@ -1,0 +1,278 @@
+---
+title: "MATH 4322 Homework 2 Solutions"
+author: "Instructor: Dr. Cathy Poliak"
+date: "9/24/2021"
+output: 
+  pdf_document: 
+    keep_tex: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Problem 1
+
+Suppose we have a data set with five predictors, $X_1$ =GPA, $X_2$ = IQ, $X_3$ = Gender (1 for Female and 0 for Male), $X_4$ = Interaction between GPA and IQ, and $X_5$ = Interaction between GPA and Gender. The response is starting salary after graduation (in thousands of dollars). Suppose we use least squares to fit the model, and get $\hat{\beta}_0 = 50$, $\hat{\beta}_1 = 20$, $\hat{\beta}_2= 0.07$, $\hat{\beta}_3 = 35$,$\hat{\beta}_4 = 0.01$, $\hat{\beta}_5 = -10$.
+
+(a) Which answer is correct, and why?
+    iii. For a fixed value of IQ and GPA, males earn more on average than females provided that the GPA is high enough because:
+* The predicted regression equation for multiple variables is:
+  + $\hat{Y} = 50 + 20X_1 + 0.07X_2 + 35X_3 + 0.01X_4 - 10X_5$  
+* The male regression equation is:
+  + $\hat{Y}_m = 50 + 20X_1 + 0.07X_2 + 0.01X_4$  
+* The female regression equation is:
+  + $\hat{Y}_f = 85 + 20X_1 + 0.07X_2 + 0.01X_4 - 10X_5$
+  
+(b) Predict the salary of a female with IQ of 110 and a GPA of 4.0.
+* $\hat{Y}_f = 85 + 20X_1 + 0.07X_2 + 0.01X_4 - 10X_5$
+ + $\hat{Y}_f = 85 + 20(4.0) + 0.07(110) + 0.1(4 * 110) - 10(4 * 1)$
+ 
+```{r, eval=TRUE}
+(Y_f = 85 + 20*(4.0) + 0.07*(110) + 0.01*(4 * 110) - 10*(4 * 1))
+```
+(c) True or false: Since the coefficient for the GPA/IQ interaction term is very small, there is very little evidence of an interaction effect. Justify your answer.
+* **False**, because it also depends on the $SE$ of the $beta$ estimator
+
+
+## Problem 2
+
+We perform stepwise, forward stepwise, and backward stepwise selection on a single data set. For each approach, we obtain $p + 1$ models, containing $0, 1, 2, \ldots , p$ predictors.  True or False:
+
+(a) The predictors in the $k$-variable model identified by forward stepwise are a subset of the predictors in the ($k+1$)-variable model identified by forward stepwise selection.
+* **True**, because in forward selection each predictors is added at each step. $k+1)$ variables are considered as predictors for the model.
+(b) The predictors in the $k$-variable model identified by backward stepwise are a subset of the predictors in the ($k + 1$)-variable model identified by backward stepwise selection.
+* **True**, by testing if any variable in test effective then those variable will be affected. The model will remain with $k$ variables in next step. 
+
+(c) The predictors in the $k$-variable model identified by backward stepwise are a subset of the predictors in the ($k + 1$)-variable model identified by forward stepwise selection.
+* **False**, the predictors of model with $k + 1$ variables from backward selection method are form by deleting each term after checking the less effective variable and deleting them.
+
+(d) The predictors in the $k$-variable model identified by forward stepwise are a subset of the predictors in the ($k+1$)-variable model identified by backward stepwise selection.
+* **False**, the $k$ variables in the predictor model by backward selection method and cannot be subset of $k+1$ variables in the model by foward selection because they're different
+
+(e) The predictors in the $k$-variable model identified by stepwise are a subset of the predictors in the ($k + 1$)-variable model identified by stepwise selection.
+* **True**, the predictors in the $k$ variable model identified by best subset are subset of the predictors in the $k+1$ variable model.
+
+
+\newpage
+
+## Problem 3
+
+This question involves the use of simple linear regression on the *Auto* data set.
+
+(a) Use the `lm()` function to perform a simple linear regression with *mpg* as the response and *horsepower* (*hp*) as the predictor. Use the `summary()` function to print the results. Comment on the output. For example:  
+```{r}
+library(ISLR)
+attach(Auto)
+mpg_horsepower = lm(mpg ~ horsepower)
+summary(mpg_horsepower)
+```
+* i. Is there a relationship between the predictor and the response?  
+    
+    +  Yes, there is a relationship between the predictor and the response, the $p-value = 2e-16 = 0 < {a = 0.05}$  
+
+* ii. How strong is the relationship between the predictor and the response?
+```{r}
+cor(mpg, horsepower)
+```
+* iii. Is the relationship between the predictor and the response positive or negative?  
+    
+    + The relationship between the predictor and the response is negative, because it have a negative correlation. 
+    
+* iv. What is the predicted mpg associated with a horsepower of 98? What are the associated 95% confidence and prediction intervals?  Give an interpretation of these intervals.
+    + $Y = 39.935 - 0.1578X$
+    + The predicted *mpg* associated with a *horsepower* of 98 is:
+```{r}
+(Y = 39.935 - 0.1578 * 98)
+```  
+
+* The *predict interval* is:
+```{r}
+horsedata = data.frame(horsepower = 98)
+#for predict
+predict(mpg_horsepower, horsedata, interval = "predict")
+```
+* This means the predicted *mpg* for a $horsepower = 98$ is between $[14.80, 34.12]$ with a $95\%$ confidence  
+    
+* The *confidence interval* is:
+```{r}
+#for confidence
+predict(mpg_horsepower, horsedata, interval = "confidence")
+```
+* This means we predict the **average** *mpg* with $horsepower = 98$ is between $[23.97, 24.96]$ with $95\%$ confidence.  
+    
+(b) Plot the response and the predictor. Use the `abline()` function to display the least squares regression line.
+```{r}
+plot(mpg~horsepower, pch=16)
+abline(mpg_horsepower, col = "red")
+```
+(c) Use the `plot()` function to produce diagnostic plots of the least squares regression fit. Comment on any problems you see with the fit.
+```{r}
+par(mfrow = c(2,2))
+plot(mpg_horsepower)
+```
+* These plot show some outliers observation numbers: 321, 331, 328  
+* High leverage: 116, 94  
+* It appears that the linearity fit is a little curvy 
+
+## Problem 4
+
+This question involves the use of multiple linear regression on the *Auto* data set.  
+
+(a) Produce a scatterplot matrix which includes all of the variables in the data set.
+```{r}
+head(Auto)
+plot(Auto)
+```
+(b) Compute the matrix of correlations between the variables using the function `cor()`. You will need to exclude the name variable, `cor()` which is qualitative.
+```{r}
+?Auto
+#9 variables
+(correlation = cor(Auto[,-9]))
+```
+
+(c) Use the `lm()` function to perform a multiple linear regression with *mpg* as the response and all other variables except name as the predictors. Use the `summary()` function to print the results. Comment on the output. For instance:
+```{r}
+auto.new = Auto[, -9] #8 variables
+auto.new$origin = as.factor(auto.new$origin) #set to factor
+auto.new$cylinders = as.factor(auto.new$cylinders)
+auto.lm = lm(mpg~., data = auto.new)  #linear model
+summary(auto.lm)
+```
+i. Is there a relationship between the predictors and the response?
+* $p-value = 2.2e-16 < a = 0.05$, therefore there is a relationship between the predictors and the response.
+ii. Which predictors appear to have a statistically significant relationship to the response?
+* The predictors that appear to have a statistically significant relationship to the response is *cylinders4, cylinders5, cylinders6, cylinders8, displacement, horsepower, weight, year, origin2 and origin3$*, because their $p-value$ is significant.
+iii. What does the coefficient for the year variable suggest?
+* For testing each one predictor separately , $H_0 : B_j = 0$ it appears that only *acceleration* does not have a statistically significant to *mpg*
+(d) Use the `plot()` function to produce diagnostic plots of the linear regression fit based on the predictors that appear to have a statistically signifianct relationship to the response. Comment on any problems you see with the fit. Do the residual plots suggest any unusually large outliers? Does the leverage plot identify any observations with unusually high leverage?
+```{r}
+auto.new2 = auto.new[, -6] #take out the 6th variable in auto.new
+auto.lm2 = lm(mpg~., data = auto.new2) #linear model2
+summary(auto.lm2)
+```
+```{r}
+par(mfrow = c(2,2))
+plot(auto.lm2)
+```
+* These plots show some outliers observation numbers: 387, 323, 327  
+* High leverage: 387, 328, 275  
+* It appears that the linearity fit is good.    
+(e) Use the * and/or : symbols to fit linear regression models with interaction effects. Do any interactions appear to be statistically significant?
+```{r}
+#interactiion model between displacment: horsepower and horsepower: weight
+auto.int = lm(mpg ~ cylinders + displacement * horsepower + horsepower*weight + year + origin, data = auto.new2)
+summary(auto.int)
+```
+* It appears that there might be interaction effects with horsepower and displacement also horsepower and weight. However, when we add these interaction terms, the displacement is no longer significant. 
+(f) Try a few different transformations of the variables, such as *log(X)*, $\sqrt{X}$, $X^2$. Comment on your findings.
+```{r}
+auto.lm3 = lm(mpg ~ cylinders + displacement + sqrt(horsepower) + weight + origin, data = auto.new2)
+summary(auto.lm3)
+```
+* The adjusted R-squared actually got lower when i $sqrt(horsepower)$
+\newpage
+
+## Problem 5
+
+This problem focuses on the **collinearity** problem.
+
+(a) Perform the following commands in R:
+
+```{r}
+set.seed (1)
+x1=runif (100)
+x2 =0.5* x1+rnorm (100) /10
+y=2+2* x1 +0.3* x2+rnorm (100)
+```
+
+The last line corresponds to creating a linear model in which $y$ is a function of $x_1$ and $x_2$. Write out the form of the linear model. What are the regression coefficients?
+
+(b) What is the correlation between $x_1$ and $x_2$? Create a scatterplot displaying the relationship between the variables.
+```{r}
+cor(x1, x2)
+plot(x1, x2)
+```
+(c) Using this data, fit a least squares regression to predict y using $x_1$ and $x_2$. Describe the results obtained. What are $\hat{\beta}_0$, $\hat{\beta}_1$, and $\hat{\beta}_2$? How do these relate to the true $\beta_0$, $\beta_1$, and $\beta_2$? Can you reject the null hypothesis $H_0 : \beta_1 = 0$? How about the null hypothesis $H_0 : \beta_2 = 0$?
+```{r}
+model.fit = lm(y~x1 + x2)
+summary(model.fit)
+```
+* $\beta_0 = 2.1305$, $\beta_1 = 1.4396$, and $\beta_2 = 1.009$. We can $RH_0$ for $\beta_1$ because the $p-value < a$. We $FRH_0$ $\beta_2$ because the $p-value > a$.  
+(d) Now fit a least squares regression to predict $y$ using only $x_1$. Comment on your results. Can you reject the null hypothesis $H_0 : \beta_1 = 0$?
+```{r}
+model.x1 = lm(y~x1)
+summary(model.x1)
+```
+* We $RH_0$ because the $p-value$ is significantly small, almost close to $0$.
+(e) Now fit a least squares regression to predict $y$ using only $x_2$. Comment on your results. Can you reject the null hypothesis $H_0 : \beta_1 = 0$?
+```{r}
+model.x2 = lm(y~x2)
+summary(model.x2)
+```
+* We $RH_0$ because the $p-value$ is significantly small, almost close to $0$.
+(f) Do the results obtained in (c)–(e) contradict each other? Explain your answer.
+* **Yes**, because we $FRH_0: \beta_2$ in (c) and we find that we could $RH_0$ in (e) when we get the model using only $x_2$.
+(g) Now suppose we obtain one additional observation, which was unfortunately mismeasured.
+
+```{r}
+x1=c(x1 , 0.1)
+x2=c(x2 , 0.8)
+y=c(y,6)
+```
+
+Re-fit the linear models from (c) to (e) using this new data. What effect does this new observation have on the each of the models? In each model, is this observation an outlier? A high-leverage point? Both? Explain your answers.
+```{r}
+new.model = lm(y ~ x1 + x2)
+summary(new.model)
+```
+* For this model with $x1$ and $x2$, we can $RH_0$ because the $p-value < a$. 
+
+
+## Problem 6
+
+In this exercise, we will generate simulated data, and will then use this data to perform best subset selection.
+
+(a) Use the `rnorm()` function to generate a predictor $X$ of length $n$ = 100, as well as a noise vector $\epsilon$ of length $n$ = 100.
+```{r}
+set.seed(1) #get the same result
+predictorx = rnorm(100)
+noise_vector = rnorm(100)
+```
+(b) Generate a response vector $Y$ of length n = 100 according to
+the model
+\[Y = \beta_0 + \beta_1X + \beta_2X^2 + \beta_3X^3 + \epsilon,\]
+where $\beta_0$, $\beta_1$, $\beta_2$, and $\beta_3$ are constants of your choice.
+
+```{r}
+beta0 = 2
+beta1 = 3
+beta2 = 4
+beta3 = 5
+Y = 2 + 3*predictorx + 4*predictorx^2 + 5*predictorx^3 + noise_vector
+```
+$Y = 2 + 3*predictorx^ + 4*predictorx^2 + 5x_3*predictorx^3 + \epsilon$  
+
+(c) Use the `regsubsets()` function to perform best subset selection in order to choose the best model containing the predictors $X,X^2,\ldots,X^{10}$. What is the best model obtained according to $C_p$, BIC, and adjusted $R^2$? Show some plots to provide evidence for your answer, and report the coefficients of the best model obtained. Note you will need to use the `data.frame()` function to create a single data set containing both $X$ and $Y$.
+```{r}
+library(leaps)
+dataset = data.frame(cbind(Y, predictorx))
+model.reg = regsubsets(Y~poly(predictorx, 10), data = dataset)
+model.sum = summary(model.reg)
+model.stat = cbind(model.sum$adjr2,model.sum$cp, model.sum$bic)
+colnames(model.stat) = c("Adjr2", "Cp", "BIC")
+print(model.stat)
+```
+* The best model is $B_3$ because it have the lowest *Cp* and *BIC*
+```{r}
+par(mfrow = c(2,2))
+plot(lm(Y~poly(predictorx, 3)))
+```
+(d) Repeat (c), using forward stepwise selection and also using backwards stepwise selection. How does your answer compare to the results in (c)?
+ 
+```{r}
+step(lm(Y~poly(predictorx, 10)), direction = "backward")
+step(lm(Y~poly(predictorx, 10)), direction = "forward")
+```
+

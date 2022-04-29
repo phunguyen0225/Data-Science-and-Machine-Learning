@@ -1,0 +1,209 @@
+---
+title: "MATH 4322 Lab 15"
+author: "Phu Nguyen"
+date: "11/4/2021"
+header-includes:
+ \usepackage{amsbsy}
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Fitting Classification Trees
+
+We first use classification trees to analyze the `Carseats` data set.  
+This is part of the `ISLR` library.  
+We will attempt to predict the **high** sales in 400 locations based on a number of predictors.  
+
+To investigate further:
+
+```{r,results='hide',warning=FALSE,message=FALSE,purl=FALSE}
+library(ISLR)
+?Carseats
+```
+
+\textcolor{red}{Question 1}: How many variables are in this dataset?  
+
+* 11 variables
+
+\textcolor{red}{Question 2}: Are there any variables that are categorical?  If so write down the names.  
+
+* Yes; ShelveLoc, Urban and US.
+
+We want to put `Sales` as a binary variable (categorical with two categories).  We will use the `ifelse()` function to create a variable called `High`, which takes on the value of `Yes` if the `Sales` variable exceeds 8, and takes on a value of `No` otherwise.  
+
+Type in the following:
+
+```{r,results='hide'}
+High = ifelse(Carseats$Sales <= 8, "No","Yes")
+High = as.factor(High)
+Carseats = data.frame(Carseats,High) #merge High with the rest of the Carseats data.
+```
+
+
+We now use the `tree()` function to fit a classification tree in order to predcit `High` using all variables except `Sales`.  Type and run the following in `R`.
+
+```{r}
+library(tree)
+tree.carseats = tree(High~. -Sales,Carseats)
+summary(tree.carseats)
+```
+
+\textcolor{red}{Question 3}: How many nodes are produced?  
+
+* 27 nodes
+
+\textcolor{red}{Question 4}:  What is the training error rate?  
+
+* 0.09 - 9%. This means that there's 9% that we missclassfied if the sale is high or low
+
+To get the graphical display of these trees type and run the following in `R`.
+
+```{r}
+plot(tree.carseats)
+text(tree.carseats,pretty = 0)
+```
+
+\textcolor{red}{Question 5}:  What is the variable of the first branch?  How is that branch split?
+
+* ShelveLoc: Bad, Medium(left side)      : Good (right side)
+
+The first branch is the most important indicator of the response.  
+
+In order to properly evaluate the performance of a clasification tree on these data, we will split that observations inot a training set and a test set.  Type and run the following in `R`.
+Overfitting. 
+
+```{r}
+set.seed(2)
+train = sample(1:nrow(Carseats),200)
+Carseats.test = Carseats[-train,]
+High.test = High[-train]
+tree.carseats = tree(High ~ . -Sales, Carseats,subset = train)
+tree.pred = predict(tree.carseats,Carseats.test,type = "class")
+table(tree.pred,High.test) 
+```
+
+\textcolor{red}{Question 6}:  What is the test error rate?
+
+```{r}
+(33+13)/(104+33+13+50)
+```
+* 23% off is pretty high, we are probably overfitting something. 
+
+We can prune the tree to see if it leads to better results.  Type and run the following.
+
+```{r}
+set.seed(3)
+cv.carseats = cv.tree(tree.carseats,FUN = prune.misclass)
+cv.carseats
+```
+
+The `dev` corresponds to the cross-validation error rate.  
+
+\textcolor{red}{Question 7}:  What is the lowest cross-validation error rate?
+
+* 74 with number of nodes is 21
+
+Run the following
+
+```{r}
+plot(cv.carseats$size,cv.carseats$dev,type = "b")
+```
+
+\textcolor{red}{Question 8}:  What value corresponds to the lowest cross-validation error rate?  
+
+* 75 with number of nodes is 8
+
+We now apply the `prune.misclass()` function in order to prune the tree.
+
+```{r}
+prune.carseats = prune.misclass(tree.carseats,best = 8)
+plot(prune.carseats)
+text(prune.carseats,pretty = 0)
+tree.pred = predict(prune.carseats,Carseats.test,type = "class")
+table(tree.pred,High.test)
+```
+
+\textcolor{red}{Question 9}:  What is the test error rate for the pruned tree?
+
+```{r}
+(28+21)/(89+21+28+62)
+```
+* 24.5%, this error rate is higher before we prune the tree. However, we are not giving up too much error rate to have better interpretation of the data. It depends on how much you want to give up to have a better interpretation.
+
+
+
+
+
+
+## Fitting Regression Trees
+
+Here we fit a regression tree to the `Boston` data set.  
+First create a test and training data.  
+
+```{r}
+library(MASS)
+set.seed(1)
+train = sample(1:nrow(Boston),nrow(Boston)/2)
+tree.boston = tree(medv ~.,Boston,subset = train)
+summary(tree.boston)
+```
+
+\textcolor{red}{Question 10}:  What variables were used to construct this tree?
+
+* rm, lstat, crim and age.
+
+\textcolor{red}{Question 11}: How many nodes are used to construct this tree?
+
+* 7 nodes are used.
+
+Plot the tree
+
+```{r}
+plot(tree.boston)
+text(tree.boston,pretty = 0)
+```
+
+\textcolor{red}{Question 12}:  What is the predicted median house price  for medium sized homes ($6.9595 \leq \text{rm} < 7.553$)?
+
+* 33.42 = $33,420.00
+
+
+Now we will use the `cv.tree()` function to see whether pruning the tree will improve performance.
+
+```{r}
+cv.boston = cv.tree(tree.boston)
+plot(cv.boston$size,cv.boston$dev,type = "b")
+```
+
+\textcolor{red}{Question 13}:  How many nodes would be best to use?
+
+* 5 nodes would be best
+
+Now prune the tree.
+
+```{r}
+prune.boston = prune.tree(tree.boston,best = 5)
+plot(prune.boston)
+text(prune.boston,pretty = 0)
+```
+
+In keeping with the cross-validation results, we use the unpruned tree to make predictions on the test set.
+
+```{r}
+yhat = predict(tree.boston,newdata = Boston[-train,])
+boston.test = Boston[-train,"medv"]
+plot(yhat,boston.test)
+abline(0,1)
+mean((yhat - boston.test)^2) #MSE
+```
+
+\textcolor{red}{Question 14}:  What is the test set MSE associated with the regression tree?
+
+* 35.28

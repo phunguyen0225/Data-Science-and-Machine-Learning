@@ -1,0 +1,174 @@
+---
+title: "Lab 17 MATH 4322"
+author: "Bagging, Random Forest and Boosting"
+date: "11/09/2021"
+header-includes:
+ \usepackage{amsbsy}
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+* We will apply bagging, random forests and boosting to the `Boston` data, using the `randomForest` package.
+
+\textcolor{red}{Question 1}: For any data that has $p$ predictors **bagging** requires that we consider how many predictors at each split in a tree?  
+
+* mtry = p
+
+First, we call the data and create training/testing sets.
+
+```{r}
+library(ISLR2)
+set.seed(1)
+train = sample(1:nrow(Boston),nrow(Boston)/2)
+boston.test = Boston[-train,"medv"]
+```
+
+## Bagging  
+
+We perform bagging as follows: 
+
+```{r,warning=TRUE,message=FALSE,error=FALSE}
+library(randomForest)
+set.seed(10)
+bag.boston = randomForest(medv~., data = Boston,
+                          subset = train,
+                          mtry = ncol(Boston) - 1, #how many variables
+                          importance = TRUE) #what variables are going to be important
+bag.boston
+```
+
+\textcolor{red}{Question 2}: What is the *MSE* based on the training set?  
+
+* *MSE* = 11.22857
+
+How well does this bagged model perform on the test set? 
+
+* sqrt(11.22857) = 3.350, which means we are off by $3.35 thousands dollar.
+
+\textcolor{red}{Question 3}:  What is the formula to determine the *MSE*?  
+
+* MSE = mean(predicted y - observed y)^2
+
+Run the following in `R`.  
+
+```{r}
+yhat.bag = predict(bag.boston,newdata = Boston[-train,])
+plot(yhat.bag,boston.test)
+abline(0,1)
+mean((yhat.bag - boston.test)^2)
+```
+
+\textcolor{red}{Question 4}: What is the *MSE* of the test data set?  
+
+* MSE = 23.56 or sqrt(23.56) = $4.85 thousand dollars.
+
+
+We could change the number of trees grown by `randomForest()` using the `ntree` argument:  
+
+```{r}
+bag.boston = randomForest(medv ~ ., data = Boston, 
+                          subset = train,
+                          mtry = ncol(Boston) - 1,
+                          ntree = 25)
+bag.boston
+yhat.bag = predict(bag.boston,newdata = Boston[-train,])
+mean((yhat.bag - boston.test)^2)
+```  
+* The MSE is a little bit higher. 
+
+\textcolor{red}{Question 5}:  What method do we use to get the different trees?  
+
+* The bootstrap method 
+
+\newpage
+
+## Random Forests  
+
+\textcolor{red}{Question 6}:  For a building a random forest of regression trees, what should be  `mtry` (number of predictors to consider at each split)?  
+
+* For regression trees the $mtry = p / 3$
+* For classification tress the $mtry = \sqrt(p)$
+
+
+Type and run the following in `R`:
+
+```{r}
+set.seed(10)
+rf.boston = randomForest(medv ~., data = Boston,
+                         subset = train,
+                         mtry = (ncol(Boston)-1)/3,
+                         importance = TRUE)
+
+yhat.rf = predict(rf.boston,newdata = Boston[-train,])
+mean((yhat.rf - boston.test)^2)
+```
+
+\textcolor{red}{Question 7}: Compare the *MSE* of the test data to the *MSE* of the bagging.  
+* The MSE for the random forest is 19.62
+* The MSE for the bagging is 23.56
+
+\textcolor{red}{Question 8}:  Use the `importance()` function what are the two mores important variables?
+
+```{r}
+importance(rf.boston)
+varImpPlot(rf.boston)
+```
+
+* rm and lstat
+
+\newpage
+
+## Boosting  
+
+Run the following in `R`:
+
+```{r}
+library(gbm)
+set.seed(1)
+boost.boston = gbm(medv ~., data = Boston[train,],
+                   distribution = "gaussian", #regression tree, "Bernoulli" - classification
+                   n.trees = 5000, #default is 500
+                   interaction.depth = 4) #up to 4 variables that interact with each other
+
+summary(boost.boston)
+```
+
+\textcolor{red}{Question 9}:  What are the two most important variables with the boosted trees?  
+
+* rm and lstat
+
+We can produce *partial dependence plots* for these two variables.  The plots illustrate the marginal effect of the selected variables on the response after *integrating* out the other variables.
+
+```{r}
+plot(boost.boston,i = "rm")
+plot(boost.boston,i = "lstat")
+```
+
+Notice that the house prices are increasing with `rm` and decreasing with `lstat`.  
+
+We will use the boosted model to predict `medv` on the test set:  
+
+```{r}
+yhat.boost = predict(boost.boston,
+                     newdata = Boston[-train,],
+                     n.trees = 5000)
+mean((yhat.boost - boston.test)^2)
+```
+
+\textcolor{red}{Question 10}:  Compare this *MSE* to the *MSE* of the random forest and bagging models.  
+
+\textcolor{blue}{The MSE for boosting is lower than random forest and bagging}
+
+* The MSE for the boosting is 18.84
+* The MSE for the random forest is 19.62
+* The MSE for the bagging is 23.56
+
+\textcolor{red}{For the classification we use the confusion matrix proportion of wrong predictor, for the regression we use MSE to predict how far we are off by}
+
+

@@ -1,0 +1,118 @@
+---
+title: "MATH 4322 Homework 3"
+author: "Phu Nguyen"
+date: "Fall 2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Problem 1
+
+Suppose we collect data for a group of students in a statistics class
+with variables $X_1$ = hours studied, $X_2$ =undergrad GPA, and Y =
+receive an A. We fit a logistic regression and produce estimated
+coefficient, $\hat{\beta}_0 = -6$, $\hat{\beta}_1 = 0.05$, $\hat{\beta}_2 = 1$.
+* $\hat{Y} = -6 + 0.05X_1 + 1X_2$  
+
+(a) Estimate the probability that a student who studies for 40 h and has an undergrad GPA of 3.5 gets an A in the class.  
+```{r}
+(Px = (exp(-6 + (0.05*40) + (1*3.5)))/(1 + exp(-6 + (0.05*40) + (1*3.5))))
+```
+* This means the predicted probability that a student get an A in the class given the hours of studies is 40 and GPA of 3.5 is 37.75%.  
+(b) How many hours would the student in part (a) need to study to
+have a 50% chance of getting an A in the class?
+* $log(p(X)/1-p(X) = B_0 + B_1X + B_2X$
+```{r}
+chance = (log(0.50/(1-0.50)) + 6 - (1*3.5))/0.05
+chance
+```
+* By the *logistic function* this show that a student need to study 50 hours to have a $50\%$ chance of getting an A in the class. However, when I tried plugging in 50 hours in the function:
+```{r}
+(Px1 = (exp(-6 + (0.05*50) + (1*3.5)))/(1 + exp(-6 + (0.05*40) + (1*3.5))))
+```
+it give me a 62.24% of getting an A in the class given 50 hours and GPA of 3.5. So I tried to play with the number of hours and the closet number that would give 50% chance of getting an A is 45.619
+```{r}
+(Px2 = (exp(-6 + (0.05*45.619) + (1*3.5)))/(1 + exp(-6 + (0.05*40) + (1*3.5))))
+```
+
+## Problem 2
+
+In this problem, you will develop a model to predict whether a given
+car gets high or low gas mileage based on the `Auto` data set in the `ISLR` package.
+```{r}
+library(ISLR)
+head(Auto)
+```
+
+(a) Create a binary variable, `mpg01`, that contains a 1 if mpg contains a value above its median, and a 0 if mpg contains a value below its median. You can compute the median using the `median()` function. Note you may find it helpful to use the `data.frame()`
+function to create a single data set containing both `mpg01` and
+the other Auto variables.
+```{r}
+mpg01 = rep(0, length(Auto$mpg))
+mpg01[Auto$mpg > median(Auto$mpg)] = 1
+Auto = data.frame(Auto, mpg01)
+summary(Auto)
+```
+(b) Explore the data graphically in order to investigate the association between `mpg01` and the other features. Which of the other features seem most likely to be useful in predicting `mpg01`? Scatterplots and boxplots may be useful tools to answer this question. Describe your findings.  
+```{r}
+#install.packages('corrplot')
+correlation = cor(Auto[,-9])
+library(corrplot)
+corrplot::corrplot.mixed(correlation, upper = "square")
+```
+* This correlation plot show that the variables that is useful for predicting *mpg* is *cylinders*, *displacement*, *horsepower*, and *weight*.
+```{r}
+pairs(Auto [, -9])
+```
+* The scatterplot also show the same result  
+
+(c) Split the data into a training set and a test set.
+```{r}
+set.seed(101)
+#Selecting 75% of data
+sample = sample.int(n = nrow(Auto), size = round(0.75 * nrow(Auto)), replace = FALSE)
+training = Auto[sample,]
+test = Auto[-sample,]  #store the left out rows
+```  
+
+(d) Perform logistic regression on the training data in order to predict `mpg01` using the variables that seemed most associated with `mpg01` in (b). What is the test error of the model obtained? That is use the test data  to predict and get the confusion matrix and determine the error rate.  
+```{r}
+#creating a model
+cylinders = as.factor(Auto$cylinders)
+auto.glm = glm(mpg01 ~ cylinders + weight + displacement + horsepower, data = training, family = "binomial")
+summary(auto.glm)
+
+#using the test and training set
+glm.pred = predict.glm(auto.glm, newdata = test, type = "response")
+summary(glm.pred)
+yHat = glm.pred > 0.5
+table(test$mpg01, yHat)
+```
+```{r}
+#the accuracy rate:
+(accuracy = (46 + 42)/98)
+
+#the error rate:
+(error = (5 + 5)/98)
+```
+(e) Perform LDA on the training data in order to predict `mpg01` using the variables that seemed most associated with mpg01 in (b). What is the test error of the model obtained?  That is use the test data  to predict and get the confusion matrix and determine the error rate. 
+```{r}
+library(MASS)
+mpg01.lda = lda(mpg01 ~ cylinders + weight + displacement + horsepower, data = training)
+mpg01.lda
+plot(mpg01.lda)
+lda.pred = predict(mpg01.lda, test)
+names(lda.pred)
+table(test$mpg01, lda.pred$class)
+```  
+```{r}
+#the accuracy rate:
+(accuracy_rate = (46 + 43)/98)
+
+#the error rate:
+(error_rate = (5 + 4) / 98)
+```
+

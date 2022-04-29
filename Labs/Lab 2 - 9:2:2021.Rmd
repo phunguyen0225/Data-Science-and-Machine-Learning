@@ -1,0 +1,150 @@
+---
+title: "Lab 2"
+author: "Phu Nguyen"
+date: "9/2/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Task 1
+
+* The code I typed in the console:
+```{r, eval=FALSE}
+install.packages("ISLR2")
+```
+* Code chunks:
+```{r}
+library(ISLR2)
+head(Boston)
+```
+* We are wanting to find a linear model with '*medv*' (median house value per $1000) as the response (output) and ‘*rm*' (average number of rooms per dwelling) as the predictor (input).  
+
+* **Question 1**: For the 6th suburb of Boston what is the median house value and the average number of rooms per dwelling?  
+
+  + **Answer**: For the 6th suburb of Boston the median house value '*medv*' is **28.7** and the average number of rooms per dwelling '*rm*' is **6.430**  
+  
+## Task 2
+
+* The code I typed for the graph:
+```{r, eval=TRUE, echo=TRUE}
+plot(Boston$rm,Boston$medv,xlab = "rm",ylab = "medv")
+```  
+
+* **Question 2**: According to the plot what is the relationship between median value of homes and average number of rooms per dwelling?  
+
+  + **Answer**: The relationship between '*medv*' and '*rm*' is *strong positive linear*. 
+  + We can also find the correlation to explain the correlation between median value of homes and average number of rooms per dwelling by: 
+```{r, eval=TRUE}
+cor(Boston$rm,Boston$medv)
+```  
+
+## Task 3 
+
+* In the code chunk type:
+```{r, eval=TRUE}
+lm.fit <- lm(medv ~ rm, data = Boston)
+summary(lm.fit)
+```
+
+* **Question 1**: Give the linear model equation.  
+  + **Answer**: $\hat{y} = 9.102x - 34.671$
+
+
+* **Question 2**: What is the percent of variation of medv that can be explained by this model?  
+  + **Answer**:  The percent of variation can be explain by R-square which is **0.4835**, therefore, **48.35%** of the data can be explained by the equation.  
+
+  
+* **Question 3**: Is rm a good predictor for medv? Justify your answer.  
+  + **Answer**: Using $H_0: \beta_1 = 0$ and p-value = 0 
+  + Since p-value < $\alpha = 0.05$, we fail to $RHo$ and therefore there is a relationship between *medv* and *rm*.  
+
+## Task 4
+
+* In a code chunk type:
+
+```{r, eval=TRUE, echo=TRUE}
+confint(lm.fit)
+```   
+
+* **Question 6**: What is the 95% confidence interval for the slope $\beta_1$ of this model?  
+  + **Answer**: [\$8,278.85, \$9,925.36]  
+
+## Task 5
+
+* The *predict()* function can be used to produce predictions, confidence interval and prediction intervals for the prediction of *medv* for a given value of *rm*.
+* The **confidence interval** is used to determine the average predicted value for the response variable.
+* The **prediction interval** is used to determine the prediction for one observation of the response
+variable.
+* Suppose we want to determine a predicted value of *medv* based on the average number of rooms per dwelling at 5, 6, and 7. We can type the following in a code chunk  
+
+```{r}
+predict(lm.fit, data.frame(rm = c(5, 6, 7)))  
+predict(lm.fit, data.frame(rm = c(5, 6, 7)),
+        interval = "confidence")  
+predict(lm.fit, data.frame(rm = c(5, 6, 7)),
+        interval = "prediction")  
+```  
+
+* **Question 7**: What is the predicted median value of homes where the average number of rooms per dwelling is 5?  
+  + **Answer**: \$10,839.92 
+
+* Notice that the **confidence interval** for 5 is [9.634, 12.045]. The interpretation is: on average the median value of the homes in all of the suburbs with average of 5 rooms is between \$9,634 and \$12,45.
+* Notice that the **prediction interval** for 5 is [-2.214, 23.894]. The interpretation is: if we look at one
+suburb, the predicted median home value for that suburb will be between -\$2,214 and \$23,894.  
+
+## Task 6
+
+* We can check assumptions through the plots of the model.
+* Using the code chunk type:  
+
+```{r, eval=TRUE, echo=TRUE}
+par(mfrow = c(2,2))
+plot(lm.fit)
+```  
+
+* **Question 8**: Do there appear to be extreme values?
+  + **Answer**: Yes at 366. Because we have extreme value, this might be the reason why our R-square value is low.  
+
+
+
+* We can use the leverage statistics to determine extreme values. The function to fnd the leverage
+statistics **hatvalues()**.
+* Using the code chunk type:  
+
+```{r}
+which.max(hatvalues(lm.fit))
+```  
+
+* The **which.max()** function identifies the index (row) of the largest element of a vector.  
+
+
+* **Question 9**: Which row has the largest leverage?  
+  + **Answer**: 366  
+  
+* Using the code chunk type: **Boston[number of largest leverage,]**.  
+
+```{r, eval= TRUE, echo=TRUE}
+Boston[366,]
+```  
+
+* **Question 10**: How many average number of rooms per dwelling and what is the median value of the
+homes in this suburb?  
+  + **Answer**: The average number of rooms per dwelling '*rm*' is **3.561** and the median value of the homes '*medv*' is **27.5**.  
+  
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
